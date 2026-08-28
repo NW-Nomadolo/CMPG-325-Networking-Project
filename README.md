@@ -87,10 +87,11 @@ The **North-West Agricultural Research Station (Potchefstroom)** operates critic
    ▼         ▼         ▼         ▼                     ▼         ▼           ▼         ▼
 [PC 1]    [PC 2]    [PC 3]    [Server 1]            [PC 4]    [PC 5]      [Admin Laptop]
 (Mgmt)    (Staff)   (Lab)     (Research Data)       (CR2)     (CR2)       (Secure Terminal)
-
+ ```
 
 Logical Topology & Departmental Segmentation
 Logical segmentation is enforced at Layer 2 via VLANs and at Layer 3 via Router-on-a-Stick sub-interfaces configured on Core Router 2.
+```text
                               [ CORE ROUTER 2 ]
                          (Inter-VLAN Sub-Interfaces)
                                        │
@@ -101,45 +102,16 @@ Logical segmentation is enforced at Layer 2 via VLANs and at Layer 3 via Router-
 Management    Staff Network          Research Labs          CR2 Expansion Infrastructure
 192.168.47.0/27 192.168.47.32/26     192.168.47.96/26       192.168.47.160/27 192.168.47.192/28
 Gateway: .1    Gateway: .33           Gateway: .97           Gateway: .161 Gateway: .193
+```
+### IP Addressing Scheme Summary Table
 
+Base Assigned Network: `192.168.47.0/24`
 
-# IP Addressing Plan & VLSM Subnetting Architecture
- 
-
----
-
-## 1. Executive Summary & Address Allocation Strategy
-
-The **North-West Agricultural Research Station (Potchefstroom)** is allocated a single classless IPv4 network block: `192.168.47.0/24`. To satisfy departmental bandwidth demands, security boundaries, and growth requirements without address wastage, **Variable Length Subnet Masking (VLSM)** has been implemented.
-
-### 1.1 Key Engineering Decisions
-* **Address Conservation:** Subnets are calculated strictly according to host capacity requirements to prevent host address starvation.
-* **Broadcast Storm Mitigation:** Segmenting the network into smaller subnets contains Layer 2 broadcast traffic within individual departmental boundaries.
-* **Core Point-to-Point Optimization:** The WAN interconnect between Core Router 1 and Core Router 2 utilizes a `/30` mask, limiting the allocation to exactly two usable IP addresses.
-
----
-
-## 2. Master VLSM Subnetting Table
-
-Base Assigned Network: `192.168.47.0/24` (Total Capacity: 256 IPs / 254 Usable Hosts)
-
-| Department / Role | VLAN ID | Subnet Address | CIDR | Subnet Mask | Usable Host IP Range | Broadcast Address | Gateway IP | Allocation Method |
-| :--- | :---: | :--- | :---: | :--- | :--- | :--- | :--- | :--- |
-| **Executive Management** | `VLAN 10` | `192.168.47.0` | `/27` | `255.255.255.224` | `192.168.47.1` – `192.168.47.30` | `192.168.47.31` | `192.168.47.1` | Static / DHCP |
-| **General Staff** | `VLAN 20` | `192.168.47.32` | `/26` | `255.255.255.192` | `192.168.47.33` – `192.168.47.94` | `192.168.47.95` | `192.168.47.33` | DHCP Dynamic |
-| **Research Laboratories** | `VLAN 30` | `192.168.47.96` | `/26` | `255.255.255.192` | `192.168.47.97` – `192.168.47.158` | `192.168.47.159` | `192.168.47.97` | DHCP Dynamic |
-| **CR2 Expansion Floor** | `VLAN 40` | `192.168.47.160` | `/27` | `255.255.255.224` | `192.168.47.161` – `192.168.47.190` | `192.168.47.191` | `192.168.47.161` | DHCP Dynamic |
-| **Infrastructure Management** | `VLAN 99` | `192.168.47.192` | `/28` | `255.255.255.240` | `192.168.47.193` – `192.168.47.206` | `192.168.47.207` | `192.168.47.193` | Static Only |
-| **Core WAN Link (R1 ↔ R2)** | `N/A` | `192.168.47.208` | `/30` | `255.255.255.252` | `192.168.47.209` – `192.168.47.210` | `192.168.47.211` | N/A | Static |
-| *Unallocated / Reserved* | `N/A` | `192.168.47.212` | `/26` | `255.255.255.192` | `192.168.47.213` – `192.168.47.254` | `192.168.47.255` | N/A | Reserved |
-
----
-
-## 3. Detailed Subnet Breakdown & Host Capacities
-
-* **VLAN 10 (Executive Management):** `/27` prefix provides 30 usable host IP addresses (`.1` to `.30`). Gateway is assigned to `.1`.
-* **VLAN 20 (General Staff):** `/26` prefix provides 62 usable host IP addresses (`.33` to `.94`). Gateway is assigned to `.33`.
-* **VLAN 30 (Research Laboratories):** `/26` prefix provides 62 usable host IP addresses (`.97` to `.158`). Gateway is assigned to `.97`.
-* **VLAN 40 (CR2 Expansion Floor):** `/27` prefix provides 30 usable host IP addresses (`.161` to `.190`). Gateway is assigned to `.161`.
-* **VLAN 99 (Infrastructure Management):** `/28` prefix provides 14 usable host IP addresses (`.193` to `.206`). Switch Virtual Interfaces (SVIs) and administrative terminals are statically assigned within this block.
-* **Point-to-Point WAN Link:** `/30` prefix provides 2 usable IP addresses (`.209` for Core Router 1 G0/0 and `.210` for Core Router 2 G0/1).
+| Device / VLAN | Subnet Address | CIDR | Subnet Mask | Usable Host Range | Default Gateway | Allocation Type |
+| :--- | :--- | :---: | :--- | :--- | :--- | :--- |
+| **VLAN 10: Executive Management** | `192.168.47.0` | `/27` | `255.255.255.224` | `192.168.47.1 - 192.168.47.30` | `192.168.47.1` | Static / Dynamic |
+| **VLAN 20: General Staff** | `192.168.47.32` | `/26` | `255.255.255.192` | `192.168.47.33 - 192.168.47.94` | `192.168.47.33` | Dynamic (DHCP) |
+| **VLAN 30: Research Labs** | `192.168.47.96` | `/26` | `255.255.255.192` | `192.168.47.97 - 192.168.47.158` | `192.168.47.97` | Dynamic (DHCP) |
+| **VLAN 40: CR2 Expansion Floor** | `192.168.47.160` | `/27` | `255.255.255.224` | `192.168.47.161 - 192.168.47.190` | `192.168.47.161` | Dynamic (DHCP) |
+| **VLAN 99: Infrastructure Mgmt** | `192.168.47.192` | `/28` | `255.255.255.240` | `192.168.47.193 - 192.168.47.206` | `192.168.47.193` | Static Only |
+| **Core Link (Core R1 ↔ Core R2)** | `192.168.47.208` | `/30` | `255.255.255.252` | `192.168.47.209 - 192.168.47.210` | N/A | Static |
