@@ -89,7 +89,7 @@ The **North-West Agricultural Research Station (Potchefstroom)** operates critic
 (Mgmt)    (Staff)   (Lab)     (Research Data)       (CR2)     (CR2)       (Secure Terminal)
  ```
 
-Logical Topology & Departmental Segmentation
+## Logical Topology & Departmental Segmentation
 Logical segmentation is enforced at Layer 2 via VLANs and at Layer 3 via Router-on-a-Stick sub-interfaces configured on Core Router 2.
 ```text
                               [ CORE ROUTER 2 ]
