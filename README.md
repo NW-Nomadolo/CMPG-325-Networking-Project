@@ -24,7 +24,7 @@ Built in Cisco Packet Tracer, the topology implements:
 ---
 
 ## 2. Network Architecture & Component Overview
-![Topology Diagram](images/topology_diagram.png)
+![Physical Topology](images/topology_diagram.png)
 ### 2.1 Hardware Specification Matrix
 | Device Name | Model / Hardware | Qty | Functional Role |
 | :--- | :--- | :---: | :--- |
@@ -66,7 +66,11 @@ Base Assigned Network: `192.168.47.0/24`
 ---
 
 ## 5. Test Verification & Verification Results
-
+![ Static Routing Table Audit test (Core router 1 CLI)](images/topology_diagram.png)
+![ Static Routing Table Audit test (Core router 2 CLI)](images/topology_diagram.png)
+![ Dynamic IP Address Allocation TEST](images/topology_diagram.png)
+![ Local & Inter-VLAN Gateway ICMP Reachability TEST](images/topology_diagram.png)
+![ Application LayerTEST](images/topology_diagram.png)
 ### Test Summary Matrix
 | Test ID | System / Function Tested | Input Command / Action | Observed Output / Status | Verdict |
 | :---: | :--- | :--- | :--- | :---: |
