@@ -24,7 +24,7 @@ Built in Cisco Packet Tracer, the topology implements:
 ---
 
 ## 2. Network Architecture & Component Overview
-
+![Topology Diagram](images/topology_diagram.png)
 ### 2.1 Hardware Specification Matrix
 | Device Name | Model / Hardware | Qty | Functional Role |
 | :--- | :--- | :---: | :--- |
