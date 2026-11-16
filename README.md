@@ -42,7 +42,7 @@ What the design implements:
 
 ### 2.2 Physical Topology
 
-![Physical topology](images/physical-topology.png)
+<img src="Physical Topology" alt="Physical Topology Diagram" width="100%">
 
 The network uses an extended star: the Catalyst 3560 sits in the centre and each access switch connects back to it with one trunk link. Adding a floor means adding one switch and one trunk, without changing the existing access switches.
 
@@ -108,20 +108,15 @@ Full device configurations are in [`configs/`](configs/).
 
 ### 5.2 Evidence
 
-**TC-01: Core-Router-1 routing table**
-![Core-Router-1 routing table](images/tc01-core-router-1.png)
+#### Test 1: Static Routing Table Audit*Core-Router-1 CLI:*<img src="Static Routing Table Audit test (Core router 1 CLI)" alt="Core Router 1 Routing Audit" width="100%">
 
-**TC-01: Core-Router-2 routing table**
-![Core-Router-2 routing table](images/tc01-core-router-2.png)
+*Core-Router-2 CLI:*<img src="Static Routing Table Audit test (Core router CLI)" alt="Core Router 2 Routing Audit" width="100%">
 
-**TC-02: DHCP relay lease**
-![DHCP lease](images/tc02-dhcp.png)
+#### Test 2: Dynamic IP Address Allocation (DHCP Relay)<img src="Dynamic IP Address Allocation TEST" alt="DHCP Relay Verification" width="100%">
 
-**TC-03: Ping tests**
-![Ping tests](images/tc03-ping.png)
+#### Test 3: Local & Inter-VLAN Gateway ICMP Reachability<img src="Local %26 Inter-VLAN Gateway ICMP Reachability TEST" alt="ICMP Ping Verification" width="100%">
 
-**TC-04: DNS and HTTP**
-![DNS and HTTP test](images/tc04-dns-http.png)
+#### Test 4: Application Layer Services (DNS & HTTP)<img src="Application Layer TEST" alt="Application Layer Web Verification" width="100%">
 
 ---
 
@@ -141,10 +136,3 @@ Full device configurations are in [`configs/`](configs/).
 - **Next steps:** add ACLs to block user VLANs from reaching VLAN 99, test them (a staff PC pinging `192.168.47.193` should fail), and add NAT on the edge router with `show ip nat translations` as evidence.
 
 ---
-
-## 8. Repository Contents
-
-- `README.md`: this document
-- `network.pkt`: Packet Tracer project file
-- `configs/`: `show running-config` output for both routers and the core switch
-- `images/`: topology diagram and test screenshots
