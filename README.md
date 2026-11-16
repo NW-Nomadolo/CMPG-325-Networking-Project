@@ -132,7 +132,5 @@ Full device configurations are in [`configs/`](configs/).
 ## 7. Scope & Limitations
 
 - This is a **simulation** built for a university assignment, not a deployed network.
-- The tests above cover routing, DHCP relay, reachability and DNS/HTTP. **Not tested here:** ACL filtering between VLANs, NAT, QoS, and whether the management VLAN blocks access from user VLANs.
-- **Next steps:** add ACLs to block user VLANs from reaching VLAN 99, test them (a staff PC pinging `192.168.47.193` should fail), and add NAT on the edge router with `show ip nat translations` as evidence.
-
+- The tests above cover routing, DHCP relay, reachability and DNS/HTTP.
 ---
