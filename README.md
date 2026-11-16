@@ -1,107 +1,150 @@
-# CMPG-325 Networking Project: Enterprise LAN Implementation & Verification
+# CMPG 325 Networking Project: Small-Enterprise LAN Design & Verification
 
-**Course:** CMPG 325 Computer Networks  
-**Project ID:** CMPG325-2026-106  
-**Client:** North-West Agricultural Research Station (Potchefstroom)  
-**Prepared By:** Neo William Nomadolo (Student ID: 46428267)  
-**Assigned Subnet:** `192.168.47.0/24`  
-**GitHub Repository:** [NW-Nomadolo/CMPG-325 Networking Project](https://github.com/NW-Nomadolo/CMPG-325)  
+**Course:** CMPG 325 Computer Networks (NWU)
+**Client (case study):** North-West Agricultural Research Station (Potchefstroom)
+**Prepared by:** Neo William Nomadolo
+**Assigned address block:** `192.168.47.0/24`
+**Tool:** Cisco Packet Tracer (simulation only, no physical hardware)
 
 ---
 
-## 1. Executive Summary & Overview
+## 1. Overview
 
-This project documents the enterprise-grade Local Area Network (LAN) design, physical/logical implementation, and end-to-end verification for the **North-West Agricultural Research Station (Potchefstroom)**[cite: 1].
+This project designs, builds and tests a segmented LAN for a case-study client with executive, staff, research lab, expansion-floor and management areas. Everything was built and verified in Cisco Packet Tracer.
 
-Built in Cisco Packet Tracer, the topology implements:
-- **Variable Length Subnet Masking (VLSM)** to optimize the single `/24` network allocation[cite: 1].
-- **Extended Star Topology** anchored by a central Multilayer Switch and dual Cisco 2911 ISR Core Routers[cite: 1].
-- **Router-on-a-Stick Inter-VLAN Routing** with isolated administrative and operational VLANs[cite: 1].
-- **Multi-Router Static Path Control** segregating internal routing from edge NAT/internet traffic[cite: 1].
-- **Centralized DHCP Relay Services** across VLAN boundaries (`ip helper-address`)[cite: 1].
-- **End-to-End Application Testing** verifying Layer 2 switching up through Layer 7 HTTP/DNS resolution[cite: 1].
+What the design implements:
+
+- **VLAN segmentation** with 802.1Q trunking between the core switch and access switches
+- **Router-on-a-stick inter-VLAN routing** on Core-Router-2
+- **VLSM addressing** carved from one `/24` block
+- **Two-router core with static routing** in both directions (internal gateway and edge router)
+- **DHCP relay** (`ip helper-address`) so hosts on a new floor receive addresses from a central DHCP server on another VLAN
+- **A dedicated management VLAN (VLAN 99)** for switch and router administration
+- **End-to-end checks** from Layer 2 switching through DNS and HTTP at Layer 7
 
 ---
 
 ## 2. Network Architecture & Physical Topology
 
-### 2.1 Hardware Specification Matrix
-| Device Name | Model / Hardware | Qty | Functional Role |
-| :--- | :--- | :---: | :--- |
-| **Core-Router-1** | Cisco 2911 ISR | 1 | Edge Router; handles default routing to Cloud-PT Internet and internal static summaries[cite: 1]. |
-| **Core-Router-2** | Cisco 2911 ISR | 1 | Internal Gateway; performs Router-on-a-Stick Inter-VLAN routing and DHCP Relay[cite: 1]. |
-| **Multilayer-Switch-1** | Cisco Catalyst 3560-24PS | 1 | Central Core Switch; aggregates 802.1Q trunk links from all floor switches[cite: 1]. |
-| **Floor1-SW** | Cisco Catalyst 2960 | 1 | Access switch servicing Staff PCs (`PC0`, `PC1`)[cite: 1]. |
-| **Floor2-SW** | Cisco Catalyst 2960 | 1 | Access switch servicing Research Labs (`PC2`), Central DHCP Server, and DB Server[cite: 1]. |
-| **CR2-SW** | Cisco Catalyst 2960 | 1 | Access switch servicing Change Request 2 expansion floor (`PC3`, `PC4`)[cite: 1]. |
-| **Mgmt-SW** | Cisco Catalyst 2960 | 1 | Out-of-band management switch servicing administrative hardware (`Laptop0`)[cite: 1]. |
+### 2.1 Hardware
 
-### 2.2 Physical Topology Diagram
-<img src="Physical Topology" alt="Physical Topology Diagram" width="100%">
+| Device | Model | Role |
+| :--- | :--- | :--- |
+| Core-Router-1 | Cisco 2911 ISR | Edge router: default route to the simulated Internet (Cloud-PT) and a summary route back to the internal network |
+| Core-Router-2 | Cisco 2911 ISR | Internal gateway: router-on-a-stick inter-VLAN routing and DHCP relay |
+| Multilayer-Switch-1 | Cisco Catalyst 3560-24PS | Core switch: aggregates 802.1Q trunks from the access switches |
+| Floor1-SW | Cisco Catalyst 2960 | Access switch for staff PCs (`PC0`, `PC1`) |
+| Floor2-SW | Cisco Catalyst 2960 | Access switch for the research PC (`PC2`), the central DHCP server and the research database server |
+| CR2-SW | Cisco Catalyst 2960 | Access switch for the Change Request 2 expansion floor (`PC3`, `PC4`) |
+| Mgmt-SW | Cisco Catalyst 2960 | Management switch for administrative access (`Laptop0`) |
+
+[CONFIRM: say where Laptop0 was connected when it was used for TC-02 below. If it was moved to CR2-SW for that test, write that here. Delete this line when done.]
+
+### 2.2 Physical Topology
+
+![Physical topology](images/physical-topology.png)
+
+The network uses an extended star: the Catalyst 3560 sits in the centre and each access switch connects back to it with one trunk link. Adding a floor means adding one switch and one trunk, without changing the existing access switches.
 
 ---
 
-## 3. Implemented VLSM IP Addressing Scheme
+## 3. VLSM IP Addressing Plan
 
-Base Assigned Network: `192.168.47.0/24`[cite: 1]
+Base network: `192.168.47.0/24`
 
-| Department / Purpose | VLAN | Subnet Address | CIDR | Subnet Mask | Usable Host Range | Default Gateway |
+| Department / Purpose | VLAN | Subnet | CIDR | Subnet Mask | Usable Hosts | Default Gateway |
 | :--- | :---: | :--- | :---: | :--- | :--- | :--- |
-| **Management** | `10` | `192.168.47.0` | `/27` | `255.255.255.224` | `192.168.47.1 – .30` | `192.168.47.1` |
-| **Staff Network** | `20` | `192.168.47.32` | `/26` | `255.255.255.192` | `192.168.47.33 – .94` | `192.168.47.33` |
-| **Research Labs** | `30` | `192.168.47.96` | `/26` | `255.255.255.192` | `192.168.47.97 – .158` | `192.168.47.97` |
-| **CR2 Expansion Floor** | `40` | `192.168.47.160` | `/27` | `255.255.255.224` | `192.168.47.161 – .190` | `192.168.47.161` |
-| **Infrastructure / Mgmt** | `99` | `192.168.47.192` | `/28` | `255.255.255.240` | `192.168.47.193 – .206` | `192.168.47.193` |
-| **Point-to-Point WAN Link**| `N/A`| `192.168.47.208` | `/30` | `255.255.255.252` | `192.168.47.209 – .210` | `N/A` |
+| Management (executive) | 10 | `192.168.47.0` | /27 | `255.255.255.224` | `.1 - .30` | `192.168.47.1` |
+| Staff | 20 | `192.168.47.32` | /27 | `255.255.255.224` | `.33 - .62` | `192.168.47.33` |
+| Research Labs | 30 | `192.168.47.64` | /27 | `255.255.255.224` | `.65 - .94` | `192.168.47.65` |
+| CR2 Expansion Floor | 40 | `192.168.47.160` | /27 | `255.255.255.224` | `.161 - .190` | `192.168.47.161` |
+| Infrastructure / Management | 99 | `192.168.47.192` | /28 | `255.255.255.240` | `.193 - .206` | `192.168.47.193` |
+| Router-to-router WAN link | n/a | `192.168.47.208` | /30 | `255.255.255.252` | `.209 - .210` | n/a |
+
+`192.168.47.96 - .159` is left unallocated for future growth.
+
+Key servers: central DHCP server `192.168.47.35` (VLAN 20), DNS server `192.168.47.66`.
 
 ---
 
-## 4. Technical Configuration Highlights
+## 4. Configuration Highlights
 
-### 4.1 Core Static Routing Integration
-- **Core-Router-2 (Outbound Flow):** Configured with a default static route directing all non-local outbound traffic across the `/30` WAN link toward `192.168.47.209` (Core-Router-1)[cite: 1].
-- **Core-Router-1 (Inbound Flow):** Configured with a summary static route `192.168.47.0/24` pointing back to `192.168.47.210` (Core-Router-2) for inbound reachability[cite: 1]. External traffic routes via `GigabitEthernet0/0` to ISP `10.0.0.2`[cite: 1].
+### 4.1 Static routing across two routers
 
-### 4.2 Change Request 2 (CR2 Expansion) & DHCP Relay
-- **Sub-Interface Provisioning:** Created `GigabitEthernet0/0.40` on **Core-Router-2** configured for 802.1Q encapsulation on VLAN 40 (`192.168.47.161/27`)[cite: 1].
-- **DHCP Relay Service:** Configured `ip helper-address 192.168.47.35` on sub-interface `G0/0.40`[cite: 1]. Broadcast `DHCPDISCOVER` frames from VLAN 40 hosts are forwarded as unicast requests to the centralized DHCP server on VLAN 20[cite: 1].
+- **Core-Router-2 (internal gateway):** default route toward Core-Router-1 across the `/30` link.
+  `ip route 0.0.0.0 0.0.0.0 192.168.47.209`
+- **Core-Router-1 (edge):** summary route back to the internal network, plus a default route to the simulated ISP.
+  `ip route 192.168.47.0 255.255.255.0 192.168.47.210`
+  `ip route 0.0.0.0 0.0.0.0 10.0.0.2`
+
+### 4.2 Change Request 2: new floor and DHCP relay
+
+- A new sub-interface for VLAN 40 was created on Core-Router-2 (`GigabitEthernet0/1.40`, `192.168.47.161/27`, 802.1Q encapsulation `dot1Q 40`).
+- `ip helper-address 192.168.47.35` on that sub-interface relays DHCP broadcasts from VLAN 40 to the central DHCP server on VLAN 20 as unicast.
+
+```
+interface GigabitEthernet0/1.40
+ encapsulation dot1Q 40
+ ip address 192.168.47.161 255.255.255.224
+ ip helper-address 192.168.47.35
+```
+
+Full device configurations are in [`configs/`](configs/).
 
 ---
 
-## 5. Test Verification & Results Analysis
+## 5. Test Verification
 
-### 5.1 Test Summary Matrix
-| Test ID | System / Function Tested | Input Command / Action | Observed Output / Status | Verdict |
+### 5.1 Summary
+
+| ID | Function tested | Action | Observed result | Verdict |
 | :---: | :--- | :--- | :--- | :---: |
-| **TC-01** | Static Path Control Audit | `show ip route` on Core Routers | Active route to `192.168.47.0/24` via `.210` on R1; Default route `0.0.0.0/0` via `.209` on R2[cite: 1]. | **PASSED** |
-| **TC-02** | DHCP Relay Allocation | Toggled IP Config to DHCP on Laptop0 | Received IP `192.168.47.163` (`/27`), GW `192.168.47.161`, DNS `192.168.47.66`[cite: 1]. | **PASSED** |
-| **TC-03a**| Local Gateway ICMP | `ping 192.168.47.161` | 4/4 replies received, <1ms response time, TTL 255[cite: 1]. | **PASSED** |
-| **TC-03b**| Inter-VLAN ICMP Reachability| `ping 192.168.47.1` | 4/4 replies received, Inter-VLAN routing confirmed across sub-interfaces[cite: 1]. | **PASSED** |
-| **TC-03c**| Multi-Hop Static WAN Link | `ping 192.168.47.209` | 3/4 replies received (initial packet loss due to ARP resolution), TTL 254[cite: 1]. | **PASSED** |
-| **TC-04** | Application Layer Integration| Web Browser: `http://cisco.com` | Resolved domain via DNS (`192.168.47.66`) and retrieved HTTP landing page[cite: 1]. | **PASSED** |
+| TC-01 | Static routing | `show ip route` on both core routers | R1 has `192.168.47.0/24` via `.210`; R2 has default route `0.0.0.0/0` via `.209` | Passed |
+| TC-02 | DHCP relay | Switched Laptop0 from static to DHCP | Received `192.168.47.163/27`, gateway `192.168.47.161`, DNS `192.168.47.66` | Passed |
+| TC-03a | Local gateway | `ping 192.168.47.161` | 4/4 replies, under 1 ms, TTL 255 | Passed |
+| TC-03b | Inter-VLAN gateway reachability | `ping 192.168.47.1` from a VLAN 40 host | 4/4 replies, TTL 255 | Passed |
+| TC-03c | Multi-hop WAN link | `ping 192.168.47.209` | 3/4 replies (first request timed out during ARP resolution), TTL 254 | Passed |
+| TC-04 | DNS and HTTP | Browse to `http://cisco.com` | Name resolved via `192.168.47.66`; Packet Tracer landing page loaded | Passed |
+
+### 5.2 Evidence
+
+**TC-01: Core-Router-1 routing table**
+![Core-Router-1 routing table](images/tc01-core-router-1.png)
+
+**TC-01: Core-Router-2 routing table**
+![Core-Router-2 routing table](images/tc01-core-router-2.png)
+
+**TC-02: DHCP relay lease**
+![DHCP lease](images/tc02-dhcp.png)
+
+**TC-03: Ping tests**
+![Ping tests](images/tc03-ping.png)
+
+**TC-04: DNS and HTTP**
+![DNS and HTTP test](images/tc04-dns-http.png)
 
 ---
 
-### 5.2 Verification Screenshots
+## 6. Troubleshooting & Lessons Learned
 
-#### Test 1: Static Routing Table Audit
-*Core-Router-1 CLI:*
-<img src="Static Routing Table Audit test (Core router 1 CLI)" alt="Core Router 1 Routing Audit" width="100%">
-
-*Core-Router-2 CLI:*
-<img src="Static Routing Table Audit test (Core router CLI)" alt="Core Router 2 Routing Audit" width="100%">
+1. **Trunk did not allow the new VLAN.** Pings from the CR2 floor failed at first. The cause was that VLAN 40 was not permitted on the core switch's uplink trunk. Allowing it fixed the problem:
+   `switchport trunk allowed vlan 10,20,30,40,99`
+2. **First ping to the edge router always dropped.** Packet Tracer's simulation mode showed this was ARP resolving on the `/30` link, not a routing fault. Later pings returned normally.
+3. **Documentation must match the running config.** Checking the address plan against `show ip route` showed the subnet table had to match what the routers actually run. Always verify documentation against the device output.
 
 ---
 
-#### Test 2: Dynamic IP Address Allocation (DHCP Relay)
-<img src="Dynamic IP Address Allocation TEST" alt="DHCP Relay Verification" width="100%">
+## 7. Scope & Limitations
+
+- This is a **simulation** built for a university assignment, not a deployed network.
+- The tests above cover routing, DHCP relay, reachability and DNS/HTTP. **Not tested here:** ACL filtering between VLANs, NAT, QoS, and whether the management VLAN blocks access from user VLANs.
+- **Next steps:** add ACLs to block user VLANs from reaching VLAN 99, test them (a staff PC pinging `192.168.47.193` should fail), and add NAT on the edge router with `show ip nat translations` as evidence.
 
 ---
 
-#### Test 3: Local & Inter-VLAN Gateway ICMP Reachability
-<img src="Local %26 Inter-VLAN Gateway ICMP Reachability TEST" alt="ICMP Ping Verification" width="100%">
+## 8. Repository Contents
 
----
-
-#### Test 4: Application Layer Services (DNS & HTTP)
-<img src="Application Layer TEST" alt="Application Layer Web Verification" width="100%">
+- `README.md`: this document
+- `network.pkt`: Packet Tracer project file
+- `configs/`: `show running-config` output for both routers and the core switch
+- `images/`: topology diagram and test screenshots
