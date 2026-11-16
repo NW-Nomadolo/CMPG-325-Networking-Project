@@ -38,7 +38,6 @@ What the design implements:
 | CR2-SW | Cisco Catalyst 2960 | Access switch for the Change Request 2 expansion floor (`PC3`, `PC4`) |
 | Mgmt-SW | Cisco Catalyst 2960 | Management switch for administrative access (`Laptop0`) |
 
-[CONFIRM: say where Laptop0 was connected when it was used for TC-02 below. If it was moved to CR2-SW for that test, write that here. Delete this line when done.]
 
 ### 2.2 Physical Topology
 
@@ -88,8 +87,6 @@ interface GigabitEthernet0/1.40
  ip address 192.168.47.161 255.255.255.224
  ip helper-address 192.168.47.35
 ```
-
-Full device configurations are in [`configs/`](configs/).
 
 ---
 
